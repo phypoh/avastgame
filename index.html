@@ -37,8 +37,8 @@
     var enemy;
     var platforms;
     var cursors;
-    var score = 0;
-    var scoreText;
+    var health = 100;
+    var healthText;
     var counter = 0;
     var spawnTime = 100;
 
@@ -61,6 +61,8 @@
         // Note to self: to clean up
         platforms = this.physics.add.staticGroup();
         platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        comp = this.physics.add.staticGroup();
+        comp.create(10, 300, 'ground').setScale(0.1, 20).refreshBody();
 
         <!-- Create Player -->
         player = this.physics.add.sprite(150, 450, 'dude');
@@ -68,7 +70,7 @@
         player.setCollideWorldBounds(true);
 
         <!-- Create Computer -->
-        comp = this.physics.add.sprite(30, 525, 'star');
+        //comp = this.physics.add.sprite(30, 525, 'star');
 
         <!-- Create Enemy -->
         enemies = this.physics.add.group({allowGravity: false});
@@ -76,7 +78,7 @@
 
         <!-- Collisions -->
         this.physics.add.collider(player, platforms);
-        this.physics.add.collider(comp, platforms);
+        //this.physics.add.collider(comp, platforms);
         this.physics.add.collider(enemies, platforms);
 
         this.physics.add.overlap(player, enemies, killEnemy, null, this);
@@ -84,6 +86,8 @@
 
         <!-- Miscellaneous -->
         cursors = this.input.keyboard.createCursorKeys();
+        healthText = this.add.text(16, 16, 'Health: 100', { fontSize: '32px', fill: '#000' });
+
 
 
     }
@@ -104,7 +108,9 @@
             counter = 0;
             spawnEnemy();
             spawnTime = getRandomInt(50, 200);
-        }            
+        }
+        healthText.setText('Health: ' + health);
+                  
 
     }
 
@@ -122,20 +128,28 @@
     function killEnemy (player, enemy)
     {
         enemy.disableBody(true, true);
+        health += 1
+        
     }
 
     function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
 
     function compAttacked (comp, enemy)
     {
-        this.physics.pause();
-        player.setTint(0xff0000);
-        gameOver = true;
+        
+        health -= 10;
+        enemy.disableBody(true, true);
+        if (health <= 0){
+            this.physics.pause();
+            player.setTint(0xff0000);
+            gameOver = true;
+        }
+        
     }
 
 
