@@ -1,7 +1,7 @@
 // Main game script
 var config = {
     type: Phaser.AUTO,
-    width: 800,
+    width: 1000,
     height: 600,
     physics: {
         default: 'arcade',
@@ -22,8 +22,7 @@ var comp;
 var enemy;
 var platforms;
 var cursors;
-var key1;
-var health = 5;
+var health = 500;
 var healthText;
 var counter = 0;
 var spawnTime = 100;
@@ -31,6 +30,10 @@ var gameOver = false;
 var score = 0;
 var scoreText;
 var enemy_type = 0;
+var spawnrate_incre = 0;
+var enemy_speed_incre = 0;
+var player_speed_incre = 0;
+var prev_enemy_height = 300;
 
 var test_text;
 
@@ -38,7 +41,7 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.image('sky', 'assets/sky.png');
+    this.load.image('sky', 'assets/VFX/black_bg.jpg');
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
@@ -48,21 +51,21 @@ function preload ()
     this.load.image('ransom0', 'assets/VFX/ransom0.png');
     this.load.image('trojan0', 'assets/VFX/trojan0.png');
 
-    this.load.audio('jump', 'assets/SFX/Jump/jump.mp3');
+    //this.load.audio('jump', 'assets/SFX/Jump/jump.mp3');
 }
 
 function create ()
 {
     bg = this.physics.add.staticGroup();
-    bg.create(400, 300, 'sky');
+    bg.create(500, 300, 'sky');
     
-    end_screen = this.add.image(400, 300, 'star');
+    end_screen = this.add.image(500, 300, 'star');
     end_screen.visible = false;
 
     <!-- Create Platform -->
     // Note to self: to clean up
     platforms = this.physics.add.staticGroup();
-    platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+    platforms.create(500, 568, 'ground').setScale(2.5).refreshBody();
 
     <!-- Create Player -->
     player = this.physics.add.sprite(150, 450, 'dude');
@@ -92,21 +95,25 @@ function create ()
 
     <!-- Miscellaneous -->
     cursors = this.input.keyboard.createCursorKeys();
-    healthText = this.add.text(16, 8, 'Lives: '+ health, { fontSize: '32px', fill: '#000' });
+    healthText = this.add.text(16, 8, 'Lives: '+ health, { fontSize: '32px', fill: '#FFF' });
     //scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#000' });
-    scoreText = this.add.text(16, 32, 'Score: '+ test_text, { fontSize: '32px', fill: '#000' });
+    scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#FFF' });
     
-    var jump = this.sound.add('jump');
+    //var jump = this.sound.add('jump');
 
 }
 
 function update ()
 {
     <!-- Player Movement -->
+
+        player.body.gravity.y = Math.min(1200, (player_speed_incre/5 + 800));
+    
+
     if (cursors.up.isDown) //player.body.touching.down
     {
-        player.setVelocityY(-200);
-        jump.play();
+        player.setVelocityY(Math.max(-600, (-250 - player_speed_incre/5)));
+        //jump.play();
     }
 
 
@@ -114,15 +121,23 @@ function update ()
     counter = counter + 1;
     if (counter >= spawnTime && !gameOver)
     {
+        
+        spawnEnemy(counter, prev_enemy_height);
+        if (350 <= score % 500 && score % 500 <= 490)
+        {
+            spawnTime = getRandomInt(20, Math.max(30, 60 - spawnrate_incre));
+        }
+        else
+        {
+            spawnTime = getRandomInt(60, Math.max(70, 200 - spawnrate_incre));
+        }
         counter = 0;
-        spawnEnemy();
-        spawnTime = getRandomInt(50, 200);
     }
     
     
 
     healthText.setText('Lives: ' + health);
-    scoreText.setText('Score: ' + test_text);
+    scoreText.setText('Score: ' + score);
 
     if (gameOver && cursors.up.isDown)
     {
@@ -139,32 +154,33 @@ function update ()
 }
 
 
-function spawnEnemy ()
+function spawnEnemy (counter, prev_enemy_height)
 {
     enemy_type = getRandomInt(1, 4);
     if (enemy_type == 1)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'bomb');
+        var enemy = enemies.create(900, getRandomInt(100, 525), 'bomb');
         enemy.name = 'bomb';
     }
     else if (enemy_type == 2)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'bot0').setScale(0.1, 0.1);
+        var enemy = enemies.create(900, getRandomInt(100, 525), 'bot0').setScale(0.15, 0.15);
         enemy.name = 'bot';
     }
     else if (enemy_type == 3)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'ransom0').setScale(0.1, 0.1);
+        var enemy = enemies.create(900, getRandomInt(100, 525), 'ransom0').setScale(0.1, 0.1);
         enemy.name = 'ransom';
     }
     else if (enemy_type == 4)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'trojan0').setScale(0.1, 0.1);
+        var enemy = enemies.create(900, getRandomInt(100, 525), 'trojan0').setScale(0.1, 0.1);
         enemy.name = 'trojan';
     }
+    prev_enemy_height = enemy.y;
     enemy.setBounce(0);
     enemy.setCollideWorldBounds(true);
-    enemy.setVelocity(-200, 0);
+    enemy.setVelocityX(Math.max(-400, (-200 - enemy_speed_incre)));
     enemy.body.AllowGravity = false;
     
 }
@@ -175,13 +191,15 @@ function killEnemy (player, enemy)
     enemy.disableBody(true, true);
     if (enemy.name == 'bomb')
     {
-        score += 1;
+        score += 10;
     }
     else
     {
         score += 10;
     }
-    
+    enemy_speed_incre = Math.floor(score * 2);
+    spawnrate_incre = Math.floor(score / 1);
+    player_speed_incre = Math.floor(score * 2);
     test_text = enemy.name;
 }
 
