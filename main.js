@@ -30,6 +30,9 @@ var spawnTime = 100;
 var gameOver = false;
 var score = 0;
 var scoreText;
+var enemy_type = 0;
+
+var test_text;
 
 var game = new Phaser.Game(config);
 
@@ -40,6 +43,10 @@ function preload ()
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
     this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+
+    this.load.image('bot0', 'assets/VFX/botnet0');
+    this.load.image('ransom0', 'assets/VFX/ransom0');
+    this.load.image('trojan0', 'assets/VFX/trojan0');
 }
 
 function create ()
@@ -84,7 +91,8 @@ function create ()
     <!-- Miscellaneous -->
     cursors = this.input.keyboard.createCursorKeys();
     healthText = this.add.text(16, 8, 'Lives: '+ health, { fontSize: '32px', fill: '#000' });
-    scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#000' });
+    //scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#000' });
+    scoreText = this.add.text(16, 32, 'Score: '+ test_text, { fontSize: '32px', fill: '#000' });
     
 
 
@@ -111,7 +119,7 @@ function update ()
     
 
     healthText.setText('Lives: ' + health);
-    scoreText.setText('Score: ' + score);
+    scoreText.setText('Score: ' + test_text);
 
     if (gameOver && cursors.up.isDown)
     {
@@ -130,18 +138,48 @@ function update ()
 
 function spawnEnemy ()
 {
-    var enemy = enemies.create(700, getRandomInt(100, 525), 'bomb');
+    enemy_type = getRandomInt(1, 4);
+    if (enemy_type == 1)
+    {
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'bomb');
+        enemy.name = 'bomb';
+    }
+    else if (enemy_type == 2)
+    {
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'bot0');
+        enemy.name = 'bot';
+    }
+    else if (enemy_type == 3)
+    {
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'ransom0');
+        enemy.name = 'ransom';
+    }
+    else if (enemy_type == 4)
+    {
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'trojan0');
+        enemy.name = 'trojan';
+    }
     enemy.setBounce(0);
     enemy.setCollideWorldBounds(true);
     enemy.setVelocity(-200, 0);
     enemy.body.AllowGravity = false;
+    
 }
 
 
 function killEnemy (player, enemy)
 {
     enemy.disableBody(true, true);
-    score += 10;
+    if (enemy.name == 'bomb')
+    {
+        score += 1;
+    }
+    else
+    {
+        score += 10;
+    }
+    
+    test_text = enemy.name;
 }
 
 function wipeEnemy (bg, enemy)
