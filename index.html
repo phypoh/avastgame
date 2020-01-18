@@ -39,6 +39,8 @@
     var cursors;
     var score = 0;
     var scoreText;
+    var counter = 0;
+    var spawnTime = 100;
 
     var game = new Phaser.Game(config);
 
@@ -89,16 +91,27 @@
     function update ()
     {
         <!-- Player Movement -->
-        if (cursors.up.isDown && player.body.touching.down)
+        if (cursors.up.isDown)
         {
-            player.setVelocityY(-400);
+            if (player.body.touching.down)
+            {
+                player.setVelocityY(-400);
+            }
+            else
+            {
+                player.setVelocityY(-300);
+            }
         }
 
 
-        if (cursors.left.isDown)
+        <!-- Random Enemy Spawn -->
+        counter = counter + 1;
+        if (counter == spawnTime)
         {
+            counter = 0;
             spawnEnemy();
-        }
+            spawnTime = getRandomInt(20, 100);
+        }            
 
     }
 
@@ -117,6 +130,12 @@
     {
         enemy.disableBody(true, true);
     }
+
+    function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 
     function compAttacked (comp, enemy)
