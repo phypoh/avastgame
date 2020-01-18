@@ -44,9 +44,9 @@ function preload ()
     this.load.image('bomb', 'assets/bomb.png');
     this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
 
-    this.load.image('bot0', 'assets/VFX/botnet0');
-    this.load.image('ransom0', 'assets/VFX/ransom0');
-    this.load.image('trojan0', 'assets/VFX/trojan0');
+    this.load.image('bot0', 'assets/VFX/botnet0.png');
+    this.load.image('ransom0', 'assets/VFX/ransom0.png');
+    this.load.image('trojan0', 'assets/VFX/trojan0.png');
 }
 
 function create ()
@@ -146,17 +146,17 @@ function spawnEnemy ()
     }
     else if (enemy_type == 2)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'bot0');
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'bot0').setScale(0.1, 0.1);
         enemy.name = 'bot';
     }
     else if (enemy_type == 3)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'ransom0');
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'ransom0').setScale(0.1, 0.1);
         enemy.name = 'ransom';
     }
     else if (enemy_type == 4)
     {
-        var enemy = enemies.create(700, getRandomInt(100, 525), 'trojan0');
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'trojan0').setScale(0.1, 0.1);
         enemy.name = 'trojan';
     }
     enemy.setBounce(0);
