@@ -22,11 +22,14 @@ var comp;
 var enemy;
 var platforms;
 var cursors;
+var key1;
 var health = 5;
 var healthText;
 var counter = 0;
 var spawnTime = 100;
-var spawnAllowed = true;
+var gameOver = false;
+var score = 0;
+var scoreText;
 
 var game = new Phaser.Game(config);
 
@@ -41,7 +44,9 @@ function preload ()
 
 function create ()
 {
-    this.add.image(400, 300, 'sky');
+    bg = this.physics.add.staticGroup();
+    bg.create(400, 300, 'sky');
+    
     end_screen = this.add.image(400, 300, 'star');
     end_screen.visible = false;
 
@@ -71,10 +76,16 @@ function create ()
 
     this.physics.add.overlap(player, enemies, killEnemy, null, this);
     this.physics.add.overlap(comp, enemies, compAttacked, null, this);
+    this.physics.add.overlap(bg, enemies, wipeEnemy, null, this);
+    
+        
+    
 
     <!-- Miscellaneous -->
     cursors = this.input.keyboard.createCursorKeys();
-    healthText = this.add.text(16, 16, 'Lives: '+ health, { fontSize: '32px', fill: '#000' });
+    healthText = this.add.text(16, 8, 'Lives: '+ health, { fontSize: '32px', fill: '#000' });
+    scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#000' });
+    
 
 
 }
@@ -90,13 +101,30 @@ function update ()
 
     <!-- Random Enemy Spawn -->
     counter = counter + 1;
-    if (counter == spawnTime && spawnAllowed)
+    if (counter >= spawnTime && !gameOver)
     {
         counter = 0;
         spawnEnemy();
         spawnTime = getRandomInt(50, 200);
     }
+    
+    
+
     healthText.setText('Lives: ' + health);
+    scoreText.setText('Score: ' + score);
+
+    if (gameOver && cursors.up.isDown)
+    {
+        health = 5;
+        gameOver = false;
+        end_screen.visible = false;
+        spawnTime = 1;
+        score = 0;
+        this.physics.resume();
+
+        
+    }
+    
 }
 
 
@@ -113,6 +141,15 @@ function spawnEnemy ()
 function killEnemy (player, enemy)
 {
     enemy.disableBody(true, true);
+    score += 10;
+}
+
+function wipeEnemy (bg, enemy)
+{
+    if (gameOver == true)
+    {
+        enemy.disableBody(true, true);
+    }
 }
 
 function getRandomInt(min, max) {
@@ -129,10 +166,10 @@ function compAttacked (comp, enemy)
     enemy.disableBody(true, true);
     if (health <= 0){
         this.physics.pause();
-        player.setTint(0xff0000);
+        
         gameOver = true;
         end_screen.visible = true;
-        spawnAllowed = false;
+        
     }
 
     
