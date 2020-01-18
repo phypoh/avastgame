@@ -70,11 +70,7 @@
 
         <!-- Create Enemy -->
         enemies = this.physics.add.group();
-        var enemy = enemies.create(700, 525, 'bomb');
-        enemy.setBounce(0);
-        enemy.setCollideWorldBounds(true);
-        enemy.setVelocity(-200, 0);
-        enemy.allowGravity = false;
+        spawnEnemy();
 
         <!-- Collisions -->
         this.physics.add.collider(player, platforms);
@@ -98,11 +94,12 @@
             player.setVelocityY(-400);
         }
 
-    }
 
+        if (cursors.left.isDown)
+        {
+            spawnEnemy();
+        }
 
-    function queueEnemy(time) {
-            this.game.time.addOnce(time, spawnEnemy); // add a timer that gets called once, then auto disposes to create a new enemy after the time given
     }
 
 
@@ -125,11 +122,7 @@
     function compAttacked (comp, enemy)
     {
         this.physics.pause();
-
         player.setTint(0xff0000);
-
-        player.anims.play('turn');
-
         gameOver = true;
     }
 
