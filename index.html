@@ -1,0 +1,140 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 9</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 800 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    var player;
+    var comp;
+    var enemy;
+    var platforms;
+    var cursors;
+    var score = 0;
+    var scoreText;
+
+    var game = new Phaser.Game(config);
+
+    function preload ()
+    {
+        this.load.image('sky', 'assets/sky.png');
+        this.load.image('ground', 'assets/platform.png');
+        this.load.image('star', 'assets/star.png');
+        this.load.image('bomb', 'assets/bomb.png');
+        this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    }
+
+    function create ()
+    {
+        this.add.image(400, 300, 'sky');
+
+        <!-- Create Platform -->
+        platforms = this.physics.add.staticGroup();
+
+        platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+
+        <!-- Create Player -->
+        player = this.physics.add.sprite(150, 450, 'dude');
+        player.setBounce(0.1);
+        player.setCollideWorldBounds(true);
+
+        <!-- Create Computer -->
+        comp = this.physics.add.sprite(30, 525, 'star');
+
+        <!-- Create Enemy -->
+        enemies = this.physics.add.group();
+        var enemy = enemies.create(700, 525, 'bomb');
+        enemy.setBounce(0);
+        enemy.setCollideWorldBounds(true);
+        enemy.setVelocity(-200, 0);
+        enemy.allowGravity = false;
+
+        <!-- Collisions -->
+        this.physics.add.collider(player, platforms);
+        this.physics.add.collider(comp, platforms);
+        this.physics.add.collider(enemies, platforms);
+
+        this.physics.add.overlap(player, enemies, killEnemy, null, this);
+        this.physics.add.overlap(comp, enemies, compAttacked, null, this);
+
+        <!-- Miscellaneous -->
+        cursors = this.input.keyboard.createCursorKeys();
+
+
+    }
+
+    function update ()
+    {
+        <!-- Player Movement -->
+        if (cursors.up.isDown && player.body.touching.down)
+        {
+            player.setVelocityY(-400);
+        }
+
+    }
+
+
+    function queueEnemy(time) {
+            this.game.time.addOnce(time, spawnEnemy); // add a timer that gets called once, then auto disposes to create a new enemy after the time given
+    }
+
+
+    function spawnEnemy ()
+    {
+        var enemy = enemies.create(700, 525, 'bomb');
+        enemy.setBounce(0);
+        enemy.setCollideWorldBounds(true);
+        enemy.setVelocity(-200, 0);
+        enemy.allowGravity = false;
+    }
+
+    
+    function killEnemy (player, enemy)
+    {
+        enemy.disableBody(true, true);
+    }
+
+
+    function compAttacked (comp, enemy)
+    {
+        this.physics.pause();
+
+        player.setTint(0xff0000);
+
+        player.anims.play('turn');
+
+        gameOver = true;
+    }
+
+
+</script>
+
+</body>
+</html>
