@@ -47,6 +47,8 @@ function preload ()
     this.load.image('bot0', 'assets/VFX/botnet0.png');
     this.load.image('ransom0', 'assets/VFX/ransom0.png');
     this.load.image('trojan0', 'assets/VFX/trojan0.png');
+
+    this.load.audio('jump', 'assets/SFX/Jump/jump.mp3');
 }
 
 function create ()
@@ -94,7 +96,7 @@ function create ()
     //scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#000' });
     scoreText = this.add.text(16, 32, 'Score: '+ test_text, { fontSize: '32px', fill: '#000' });
     
-
+    var jump = this.sound.add('jump');
 
 }
 
@@ -104,6 +106,7 @@ function update ()
     if (cursors.up.isDown) //player.body.touching.down
     {
         player.setVelocityY(-200);
+        jump.play();
     }
 
 
