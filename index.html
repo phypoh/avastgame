@@ -58,8 +58,8 @@
         this.add.image(400, 300, 'sky');
 
         <!-- Create Platform -->
+        // Note to self: to clean up
         platforms = this.physics.add.staticGroup();
-
         platforms.create(400, 568, 'ground').setScale(2).refreshBody();
 
         <!-- Create Player -->
@@ -71,7 +71,7 @@
         comp = this.physics.add.sprite(30, 525, 'star');
 
         <!-- Create Enemy -->
-        enemies = this.physics.add.group();
+        enemies = this.physics.add.group({allowGravity: false});
         spawnEnemy();
 
         <!-- Collisions -->
@@ -91,16 +91,9 @@
     function update ()
     {
         <!-- Player Movement -->
-        if (cursors.up.isDown)
+        if (cursors.up.isDown) //player.body.touching.down
         {
-            if (player.body.touching.down)
-            {
-                player.setVelocityY(-400);
-            }
-            else
-            {
-                player.setVelocityY(-300);
-            }
+            player.setVelocityY(-200);
         }
 
 
@@ -110,7 +103,7 @@
         {
             counter = 0;
             spawnEnemy();
-            spawnTime = getRandomInt(20, 100);
+            spawnTime = getRandomInt(50, 200);
         }            
 
     }
@@ -118,11 +111,11 @@
 
     function spawnEnemy ()
     {
-        var enemy = enemies.create(700, 525, 'bomb');
+        var enemy = enemies.create(700, getRandomInt(100, 525), 'bomb');
         enemy.setBounce(0);
         enemy.setCollideWorldBounds(true);
         enemy.setVelocity(-200, 0);
-        enemy.allowGravity = false;
+        enemy.body.AllowGravity = false;
     }
 
     
