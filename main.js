@@ -34,6 +34,9 @@ var spawnrate_incre = 0;
 var enemy_speed_incre = 0;
 var player_speed_incre = 0;
 var prev_enemy_height = 300;
+var cone_size = 0;
+var kill_enemy = false;             // Set to true only when an enemy is killed
+var kill_enemy_player = false;      // Set to true only when an enemy is killed
 
 var test_text;
 
@@ -41,25 +44,27 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.image('sky', 'assets/VFX/black_bg.jpg');
-    this.load.image('ground', 'assets/platform.png');
-    this.load.image('star', 'assets/star.png');
-    this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
 
-    this.load.image('bot0', 'assets/VFX/botnet0.png');
-    this.load.image('ransom0', 'assets/VFX/ransom0.png');
-    this.load.image('trojan0', 'assets/VFX/trojan0.png');
-
-    //this.load.audio('jump', 'assets/SFX/Jump/jump.mp3');
+    // Download all visual effects and sprites
+    this.load.image('background', 'assets/VFX/background.png');
+    this.load.image('ground', 'assets/VFX/platform.png');
+    this.load.image('end_screen', 'assets/VFX/end_screen.png');
+    this.load.spritesheet('player', 'assets/VFX/player/player.png', { frameWidth: 100, frameHeight: 100 });
+    this.load.spritesheet('trojan', 'assets/VFX/trojan/trojan.png', { frameWidth: 100, frameHeight: 100 });
+    this.load.spritesheet('bot', 'assets/VFX/botnet/botnet.png', { frameWidth: 100, frameHeight: 100 });   // Trojan horse spritesheet
+    this.load.spritesheet('ransom', 'assets/VFX/ransom/ransom.png', { frameWidth: 100, frameHeight: 100 });   // Ransomware spritesheet
+    this.load.spritesheet('splat', 'assets/VFX/splat/splat.png', { frameWidth: 100, frameHeight: 100 });     // Virus death spritesheet
+    this.load.spritesheet('playerhit', 'assets/VFX/playerhit/playerhit.png', { frameWidth: 300, frameHeight: 200 });
 }
 
 function create ()
 {
+    // Create background
     bg = this.physics.add.staticGroup();
-    bg.create(500, 300, 'sky');
+    bg.create(500, 300, 'background');
     
-    end_screen = this.add.image(500, 300, 'star');
+    // Create ending screen
+    end_screen = this.add.image(500, 300, 'end_screen');
     end_screen.visible = false;
 
     <!-- Create Platform -->
@@ -68,12 +73,12 @@ function create ()
     platforms.create(500, 568, 'ground').setScale(2.5).refreshBody();
 
     <!-- Create Player -->
-    player = this.physics.add.sprite(150, 450, 'dude');
+    player = this.physics.add.sprite(220, 450, 'player');
     player.setBounce(0.1);
     player.setCollideWorldBounds(true);
 
     <!-- Create Computer -->
-    //comp = this.physics.add.sprite(30, 525, 'star');
+    //comp = this.physics.add.sprite(30, 525, 'end_screen');
     comp = this.physics.add.staticGroup();
     comp.create(10, 300, 'ground').setScale(0.1, 20).refreshBody();
 
@@ -107,14 +112,16 @@ function update ()
 {
     <!-- Player Movement -->
 
-        player.body.gravity.y = Math.min(1200, (player_speed_incre/5 + 800));
+        player.body.gravity.y = Math.min(1200, (player_speed_incre + 600));
     
 
-    if (cursors.up.isDown) //player.body.touching.down
+    if (cursors.up.isDown) 
     {
-        player.setVelocityY(Math.max(-600, (-250 - player_speed_incre/5)));
-        //jump.play();
+        player.setVelocityY(Math.max(-600, (-250 - player_speed_incre)));
+        
     }
+
+    cone_size = Math.abs(counter * Math.max(-600, (-250 - player_speed_incre))/70);
 
 
     <!-- Random Enemy Spawn -->
@@ -136,8 +143,8 @@ function update ()
     
     
 
-    healthText.setText('Lives: ' + health);
-    scoreText.setText('Score: ' + score);
+    healthText.setText('Cone size: ' + cone_size);
+    scoreText.setText('prev_enemy_height: ' + prev_enemy_height);
 
     if (gameOver && cursors.up.isDown)
     {
@@ -154,30 +161,37 @@ function update ()
 }
 
 
-function spawnEnemy (counter, prev_enemy_height)
+function spawnEnemy ()
 {
     enemy_type = getRandomInt(1, 4);
-    if (enemy_type == 1)
-    {
-        var enemy = enemies.create(900, getRandomInt(100, 525), 'bomb');
-        enemy.name = 'bomb';
-    }
-    else if (enemy_type == 2)
-    {
-        var enemy = enemies.create(900, getRandomInt(100, 525), 'bot0').setScale(0.15, 0.15);
-        enemy.name = 'bot';
-    }
-    else if (enemy_type == 3)
-    {
-        var enemy = enemies.create(900, getRandomInt(100, 525), 'ransom0').setScale(0.1, 0.1);
-        enemy.name = 'ransom';
-    }
-    else if (enemy_type == 4)
-    {
-        var enemy = enemies.create(900, getRandomInt(100, 525), 'trojan0').setScale(0.1, 0.1);
-        enemy.name = 'trojan';
-    }
+    var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+        Math.min(525, prev_enemy_height + cone_size)) , 'bomb');
+    enemy.name = 'bomb';
+    // if (enemy_type == 1)
+    // {
+    //     //var enemy = enemies.create(900, spawnInCone(prev_enemy_height, counter * Math.max(-600, (-250 - player_speed_incre)) / 100) , 'bomb');
+    //     enemy.name = 'bomb';
+    // }
+    // else if (enemy_type == 2)
+    // {
+    //     var enemy = enemies.create(900, getRandomInt(100, 525), 'bot').setScale(0.15, 0.15);
+    //     enemy.name = 'bot';
+    // }
+    // else if (enemy_type == 3)
+    // {
+    //     var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height + counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100), 
+    //         Math.min(525, prev_enemy_height - counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100)), 'ransom').setScale(0.1, 0.1);
+    //     enemy.name = 'ransom';
+    // }
+    // else if (enemy_type == 4)
+    // {
+    //     var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height + counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100), 
+    //         Math.min(525, prev_enemy_height - counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100)), 'trojan').setScale(0.1, 0.1);
+    //     enemy.name = 'trojan';
+    // }
+
     prev_enemy_height = enemy.y;
+
     enemy.setBounce(0);
     enemy.setCollideWorldBounds(true);
     enemy.setVelocityX(Math.max(-400, (-200 - enemy_speed_incre)));
@@ -199,7 +213,7 @@ function killEnemy (player, enemy)
     }
     enemy_speed_incre = Math.floor(score * 2);
     spawnrate_incre = Math.floor(score / 1);
-    player_speed_incre = Math.floor(score * 2);
+    player_speed_incre = Math.floor(score / 10);
     test_text = enemy.name;
 }
 
@@ -211,12 +225,18 @@ function wipeEnemy (bg, enemy)
     }
 }
 
-function getRandomInt(min, max) {
+function getRandomInt(min, max) 
+{
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function spawnInCone(prev_enemy_height, cone_size)
+{
+    return getRandomInt(Math.max(100, prev_enemy_height - 
+        Math.abs(cone_size)), math.min(525, prev_enemy_height + Math.abs(cone_size)))
+}
 
 function compAttacked (comp, enemy)
 {
