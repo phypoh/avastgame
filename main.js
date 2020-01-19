@@ -51,7 +51,7 @@ function preload ()
     this.load.image('end_screen', 'assets/VFX/end_screen.png');
     this.load.spritesheet('player', 'assets/VFX/player/player.png', { frameWidth: 100, frameHeight: 100 });
     this.load.spritesheet('trojan', 'assets/VFX/trojan/trojan.png', { frameWidth: 100, frameHeight: 100 });
-    this.load.spritesheet('bot', 'assets/VFX/botnet/botnet.png', { frameWidth: 100, frameHeight: 100 });   // Trojan horse spritesheet
+    this.load.spritesheet('botnet', 'assets/VFX/botnet/botnet.png', { frameWidth: 100, frameHeight: 100 });   // Trojan horse spritesheet
     this.load.spritesheet('ransom', 'assets/VFX/ransom/ransom.png', { frameWidth: 100, frameHeight: 100 });   // Ransomware spritesheet
     this.load.spritesheet('splat', 'assets/VFX/splat/splat.png', { frameWidth: 100, frameHeight: 100 });     // Virus death spritesheet
     this.load.spritesheet('playerhit', 'assets/VFX/playerhit/playerhit.png', { frameWidth: 300, frameHeight: 200 });
@@ -106,22 +106,114 @@ function create ()
     
     //var jump = this.sound.add('jump');
 
+    // Create sprites animation 
+    this.anims.create({
+        key: 'up',           
+        frames: this.anims.generateFrameNumbers('player', { start: 5, end: 6 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'up_stall',           
+        frames: [ { key: 'player', frame: 4 } ],
+        frameRate: 10,
+    });
+
+    this.anims.create({
+        key: 'move',           
+        frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+        frameRate: 5,
+        repeat: -1
+    });
+
+
+
+    this.anims.create({
+        key: 'trojan_move',           
+        frames: this.anims.generateFrameNumbers('trojan', { start: 0, end: 1 }),
+        frameRate: 5,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'ransom_move',           
+        frames: this.anims.generateFrameNumbers('ransom', { start: 0, end: 1 }),
+        frameRate: 5,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'botnet_move',           
+        frames: this.anims.generateFrameNumbers('botnet', { start: 0, end: 1 }),
+        frameRate: 5,
+        repeat: -1
+    });
+
+
+
+
+    this.anims.create({
+        key: 'enemy_dead',           
+        frames: this.anims.generateFrameNumbers('splat', { start: 0, end: 5 }),
+        frameRate: 15,
+    });
+
+    this.anims.create({
+        key: 'hammer',           
+        frames: this.anims.generateFrameNumbers('playerhit', { start: 0, end: 6 }),
+        frameRate: 15,
+    });
+        //
+
 }
 
 function update ()
 {
+    // Enemy movement animation
+    if (!gameOver)
+            enemies.children.iterate(child => 
+            {
+                if (child.name == 'trojan')
+                {
+                    child.anims.play('trojan_move', true)
+                }
+                else if (child.name == 'ransom')
+                {
+                    child.anims.play('ransom_move', true)
+                }
+                else if (child.name == 'botnet')
+                {
+                    child.anims.play('botnet_move', true)
+                }
+            });
+
+
+
+
     <!-- Player Movement -->
-
-        player.body.gravity.y = Math.min(1200, (player_speed_incre + 600));
-    
-
+    // Increase gravity by increasing score
+    player.body.gravity.y = Math.min(1200, (player_speed_incre + 600));
+    // Jump up
     if (cursors.up.isDown) 
     {
+        // Increase velocity with score
         player.setVelocityY(Math.max(-600, (-250 - player_speed_incre)));
-        
+        player.anims.play('up', true); 
+    }
+    else if (player.body.touching.down)
+    {
+        player.anims.play('move', true);
+    }
+    else
+    {
+        player.anims.play('up_stall', true);
     }
 
+    // Calculate cone within which the n+1 enemy should spawn
     cone_size = Math.abs(counter * Math.max(-600, (-250 - player_speed_incre))/70);
+
+
 
 
     <!-- Random Enemy Spawn -->
@@ -142,9 +234,9 @@ function update ()
     }
     
     
-
-    healthText.setText('Cone size: ' + cone_size);
-    scoreText.setText('prev_enemy_height: ' + prev_enemy_height);
+    // Score and lives display
+    healthText.setText('Lives: ' + health);
+    scoreText.setText('Score: ' + score);
 
     if (gameOver && cursors.up.isDown)
     {
@@ -164,31 +256,31 @@ function update ()
 function spawnEnemy ()
 {
     enemy_type = getRandomInt(1, 4);
-    var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
-        Math.min(525, prev_enemy_height + cone_size)) , 'bomb');
-    enemy.name = 'bomb';
-    // if (enemy_type == 1)
-    // {
-    //     //var enemy = enemies.create(900, spawnInCone(prev_enemy_height, counter * Math.max(-600, (-250 - player_speed_incre)) / 100) , 'bomb');
-    //     enemy.name = 'bomb';
-    // }
-    // else if (enemy_type == 2)
-    // {
-    //     var enemy = enemies.create(900, getRandomInt(100, 525), 'bot').setScale(0.15, 0.15);
-    //     enemy.name = 'bot';
-    // }
-    // else if (enemy_type == 3)
-    // {
-    //     var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height + counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100), 
-    //         Math.min(525, prev_enemy_height - counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100)), 'ransom').setScale(0.1, 0.1);
-    //     enemy.name = 'ransom';
-    // }
-    // else if (enemy_type == 4)
-    // {
-    //     var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height + counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100), 
-    //         Math.min(525, prev_enemy_height - counter * Math.max(-600, (-250 - player_speed_incre/10)) / 100)), 'trojan').setScale(0.1, 0.1);
-    //     enemy.name = 'trojan';
-    // }
+    
+    if (enemy_type == 1)
+    {
+        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(525, prev_enemy_height + cone_size)) , 'trojan');
+        enemy.name = 'trojan';
+    }
+    else if (enemy_type == 2)
+    {
+        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(525, prev_enemy_height + cone_size)) , 'ransom');
+        enemy.name = 'ransom';
+    }
+    else if (enemy_type == 3)
+    {
+        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(525, prev_enemy_height + cone_size)) , 'botnet');
+        enemy.name = 'botnet';
+    }
+    else if (enemy_type == 4)
+    {
+        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(525, prev_enemy_height + cone_size)) , 'trojan');
+        enemy.name = 'trojan';
+    }
 
     prev_enemy_height = enemy.y;
 
@@ -202,7 +294,7 @@ function spawnEnemy ()
 
 function killEnemy (player, enemy)
 {
-    enemy.disableBody(true, true);
+    // enemy.disableBody(true, true);
     if (enemy.name == 'bomb')
     {
         score += 10;
@@ -215,6 +307,32 @@ function killEnemy (player, enemy)
     spawnrate_incre = Math.floor(score / 1);
     player_speed_incre = Math.floor(score / 10);
     test_text = enemy.name;
+
+
+    kill_enemy = true;
+    kill_enemy_player = true;
+    enemy.setVelocity(0,0);
+    player.setVelocity(0,0);
+    position_x = enemy.x
+    position_y = enemy.y
+
+
+
+    player.anims.play('hammer', true);
+    player.once('animationcomplete',() => {
+        console.log('animationcomplete')
+        player.anims.play('hammer', false);
+        enemy.anims.play('enemy_dead', true);
+        kill_enemy_player = false;
+        enemy.setPosition(position_x+20, position_y+20);
+        enemy.once('animationcomplete',() => {
+            console.log('animationcomplete')
+            enemy.disableBody(true, true);
+            kill_enemy = false;
+            
+
+        })
+    })
 }
 
 function wipeEnemy (bg, enemy)
@@ -232,11 +350,7 @@ function getRandomInt(min, max)
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function spawnInCone(prev_enemy_height, cone_size)
-{
-    return getRandomInt(Math.max(100, prev_enemy_height - 
-        Math.abs(cone_size)), math.min(525, prev_enemy_height + Math.abs(cone_size)))
-}
+
 
 function compAttacked (comp, enemy)
 {
