@@ -1,4 +1,4 @@
-# Avast Browser Game
+# Avast Browser Game -- "Press [Up] to Play!"
 
 An intuitive and addictive one-button game to keep you entertained while your Avast secure browser loads. Including original assets such as animations and background music.
 
