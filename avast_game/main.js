@@ -22,7 +22,7 @@ var comp;
 var enemy;
 var platforms;
 var cursors;
-var health = 500;
+var health = 1;
 var healthText;
 var counter = 0;
 var spawnTime = 100;
@@ -37,6 +37,7 @@ var prev_enemy_height = 300;
 var cone_size = 0;
 var kill_enemy = false;             // Set to true only when an enemy is killed
 var kill_enemy_player = false;      // Set to true only when an enemy is killed
+var spawn_counter = 0;
 
 var test_text;
 
@@ -50,28 +51,37 @@ function preload ()
     this.load.image('ground', 'assets/VFX/platform.png');
     this.load.image('end_screen', 'assets/VFX/end_screen.png');
     this.load.image('computer', 'assets/VFX/computer.png');
-
     this.load.spritesheet('player', 'assets/VFX/player/player.png', { frameWidth: 100, frameHeight: 100 });
+
     this.load.spritesheet('trojan', 'assets/VFX/trojan/trojan.png', { frameWidth: 100, frameHeight: 100 });
     this.load.spritesheet('phish', 'assets/VFX/phish/phish.png', { frameWidth: 100, frameHeight: 100 });
     this.load.spritesheet('adware', 'assets/VFX/adware/adware.png', { frameWidth: 100, frameHeight: 100 });
     this.load.spritesheet('botnet', 'assets/VFX/botnet/botnet.png', { frameWidth: 100, frameHeight: 100 });   // Trojan horse spritesheet
-    this.load.spritesheet('ransom', 'assets/VFX/ransom/ransom.png', { frameWidth: 100, frameHeight: 100 });   // Ransomware spritesheet
-    
+    this.load.spritesheet('ransom', 'assets/VFX/ransom/ransom.png', { frameWidth: 100, frameHeight: 100 }); 
+
     this.load.spritesheet('splat', 'assets/VFX/splat/splat.png', { frameWidth: 100, frameHeight: 100 });     // Virus death spritesheet
     this.load.spritesheet('playerhit', 'assets/VFX/playerhit/playerhit.png', { frameWidth: 300, frameHeight: 200 });
     this.load.spritesheet('playerhitjet', 'assets/VFX/playerhitjet/playerhitjet.png', { frameWidth: 300, frameHeight: 200 });
+
+    this.load.image('trojan_es', 'assets/VFX/end_screens/trojan_info.png');
+    this.load.image('phish_es', 'assets/VFX/end_screens/phish_info.png');
+    this.load.image('adware_es', 'assets/VFX/end_screens/adware_info.png');
+    this.load.image('botnet_es', 'assets/VFX/end_screens/botnet_info.png');
+    this.load.image('ransom_es', 'assets/VFX/end_screens/ransom_info.png');
+
+    // Load SFX
+    this.load.audio('bgm', 'assets/SFX/untitled_chaos.mp3');
+    this.load.audio('end_screen_music', 'assets/SFX/end_screen.mp3');
+    this.load.audio('rocket_sound', 'assets/SFX/rocket.mp3');
 }
 
 function create ()
 {
     // Create background
     bg = this.physics.add.staticGroup();
-    bg.create(600, 300, 'background').setScale(1.3).refreshBody();
+    bg.create(600, 300, 'background').setScale(1.5).refreshBody();
     
-    // Create ending screen
-    end_screen = this.add.image(600, 300, 'end_screen');
-    end_screen.visible = false;
+    
 
     <!-- Create Platform -->
     // Note to self: to clean up
@@ -107,9 +117,10 @@ function create ()
 
     <!-- Miscellaneous -->
     cursors = this.input.keyboard.createCursorKeys();
-    healthText = this.add.text(16, 8, 'Lives: '+ health, { fontSize: '32px', fill: '#FFF' });
-    //scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#000' });
-    scoreText = this.add.text(16, 32, 'Score: '+ score, { fontSize: '32px', fill: '#FFF' });
+    this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    //healthText = this.add.text(950, 8, 'Lives: '+ health, { fontSize: '32px', fill: '#FFF' });
+
+    scoreText = this.add.text(950, 32, 'Score: '+ score, { fontSize: '32px', fill: '#FFF' });
     
     //var jump = this.sound.add('jump');
 
@@ -188,7 +199,43 @@ function create ()
         frames: this.anims.generateFrameNumbers('playerhitjet', { start: 0, end: 6 }),
         frameRate: 15,
     });
-        //
+    
+    // Create ending screen
+    trojan_es = this.add.image(600, 300, 'trojan_es');
+    phish_es = this.add.image(600, 300, 'phish_es');
+    adware_es = this.add.image(600, 300, 'adware_es');
+    botnet_es = this.add.image(600, 300, 'botnet_es');
+    ransom_es = this.add.image(600, 300, 'ransom_es');
+    trojan_es.visible = false;
+    phish_es.visible = false;
+    adware_es.visible = false;
+    botnet_es.visible = false;
+    ransom_es.visible = false;
+
+    // Load sounds
+    this.rocket_sound = this.sound.add('rocket_sound');
+    this.bgm = this.sound.add('bgm');
+    this.esm = this.sound.add('end_screen_music');
+    var bgmConfig = {
+        mute: false,
+        volume: 2,
+        rate: 1,
+        detune: 0,
+        seek: 0,
+        loop: true,
+        delay: 0,
+    }
+    var esmConfig = {
+        mute: false,
+        volume: 1,
+        rate: 1,
+        detune: 0,
+        seek: 0,
+        loop: false,
+        delay: 0,
+    }
+    this.bgm.play(bgmConfig);
+
 
 }
 
@@ -233,10 +280,13 @@ function update ()
             // Increase velocity with score
             player.setVelocityY(Math.max(-600, (-250 - player_speed_incre)));
             player.anims.play('up', true); 
+
+            
         }
         else if (player.body.touching.down)
         {
             player.anims.play('move', true);
+
         }
         else
         {
@@ -253,7 +303,9 @@ function update ()
     counter = counter + 1;
     if (counter >= spawnTime && !gameOver)
     {
-        
+        spawn_counter ++;
+        score = (spawn_counter + health - 1) * 10;
+
         spawnEnemy(counter, prev_enemy_height);
         if (350 <= score % 500 && score % 500 <= 490)
         {
@@ -264,20 +316,21 @@ function update ()
             spawnTime = getRandomInt(60, Math.max(70, 200 - spawnrate_incre));
         }
         counter = 0;
+
     }
     
     
     // Score and lives display
-    healthText.setText('Lives: ' + health);
     scoreText.setText('Score: ' + score);
 
-    if (gameOver && cursors.up.isDown)
+    if (gameOver && Phaser.Input.Keyboard.JustDown(this.spacebar))
     {
-        health = 5;
+        health = 1;
         gameOver = false;
         end_screen.visible = false;
         spawnTime = 1;
         score = 0;
+        spawn_counter = 0;
         this.physics.resume();
 
         
@@ -286,38 +339,42 @@ function update ()
 }
 
 
+
 function spawnEnemy ()
 {
-    enemy_type = getRandomInt(1, 4);
-    
+    enemy_type = getRandomInt(1, 5);
+
+    spawn_dist = 1150;
     if (enemy_type == 1)
     {
-        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
-            Math.min(525, prev_enemy_height + cone_size)) , 'trojan');
+
+        var enemy = enemies.create(spawn_dist, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(500, prev_enemy_height + cone_size)) , 'trojan');
         enemy.name = 'trojan';
+
+        
     }
     else if (enemy_type == 2)
     {
-        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
-            Math.min(525, prev_enemy_height + cone_size)) , 'ransom');
+        var enemy = enemies.create(spawn_dist, 505 , 'ransom');
         enemy.name = 'ransom';
     }
     else if (enemy_type == 3)
     {
-        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
-            Math.min(525, prev_enemy_height + cone_size)) , 'botnet');
+        var enemy = enemies.create(spawn_dist, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(300, prev_enemy_height + cone_size)) , 'botnet');
         enemy.name = 'botnet';
     }
     else if (enemy_type == 4)
     {
-        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
-            Math.min(525, prev_enemy_height + cone_size)) , 'adware');
+        var enemy = enemies.create(spawn_dist, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(400, prev_enemy_height + cone_size)) , 'adware');
         enemy.name = 'adware';
     }
     else if (enemy_type == 5)
     {
-        var enemy = enemies.create(900, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
-            Math.min(525, prev_enemy_height + cone_size)) , 'phish');
+        var enemy = enemies.create(spawn_dist, getRandomInt(Math.max(100, prev_enemy_height - cone_size), 
+            Math.min(500, prev_enemy_height + cone_size)) , 'phish');
         enemy.name = 'phish';
     }
     prev_enemy_height = enemy.y;
@@ -332,15 +389,8 @@ function spawnEnemy ()
 
 function killEnemy (player, enemy)
 {
-    // enemy.disableBody(true, true);
-    if (enemy.name == 'bomb')
-    {
-        score += 10;
-    }
-    else
-    {
-        score += 10;
-    }
+
+    
     enemy_speed_incre = Math.floor(score * 2);
     spawnrate_incre = Math.floor(score / 1);
     player_speed_incre = Math.floor(score / 10);
@@ -362,7 +412,7 @@ function killEnemy (player, enemy)
 
 		kill_enemy_player = false;
 		enemy.disableBody(true, true);
-
+        kill_enemy = false;
 
 		var splat = splats.create(enemy.x, enemy.y, 'splat');
 		splat.setBounce(0);
@@ -374,7 +424,7 @@ function killEnemy (player, enemy)
 		splat.once('animationcomplete',() => {
 			console.log('animationcomplete')
 			splat.disableBody(true, true);
-			kill_enemy = false;
+			
 				
 			//enemy.destroy()
 		})
@@ -407,7 +457,30 @@ function compAttacked (comp, enemy)
         this.physics.pause();
         
         gameOver = true;
+        if (enemy.name == 'trojan')
+        {
+            end_screen = trojan_es;
+        }
+        else if (enemy.name == 'adware')
+        {
+            end_screen = adware_es;
+        }
+        else if (enemy.name == 'ransom')
+        {
+            end_screen = ransom_es;
+        }
+        else if (enemy.name == 'botnet')
+        {
+            end_screen = botnet_es;
+        }
+        else if (enemy.name == 'phish')
+        {
+            end_screen = phish_es;
+        }
         end_screen.visible = true;
+
+        
+
         
     }
 
